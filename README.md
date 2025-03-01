@@ -17,7 +17,7 @@ Ensure you have **Python 3.8+** installed.
 
 ### 1️⃣ Clone the Repository
 ```sh
-git clone https://github.com/yourusername/resume-reactor.git
+git clone https://github.com/87designer/resume-reactor.git
 cd resume-reactor
 ```
 
