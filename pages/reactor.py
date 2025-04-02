@@ -1,4 +1,5 @@
 import streamlit as st
+from modules.nav import Navbar
 import openai
 from docx import Document
 from docx.shared import Pt, Inches
@@ -6,7 +7,6 @@ from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 import tempfile
 import re
 from typing import List, Optional
-
 
 def generate_resume(job_description: str, resume_content: str, industry_key_word: str, api_key: str) -> str:
     """
@@ -70,61 +70,119 @@ def generate_resume(job_description: str, resume_content: str, industry_key_word
 
     return response.choices[0].message.content
 
-def create_word_doc(resume_text: str, user_name: str, contact_info: List[str]) -> str:
-    """
-    Creates a formatted Word document from the generated resume text.
 
-    Args:
-        resume_text (str): The generated resume content.
-        user_name (str): The user's full name.
-        contact_info (List[str]): A list of the user's contact information.
-
-    Returns:
-        str: The file path to the generated Word document.
-    """
+def create_word_doc(resume_text: str, user_name: str, contact_info: List[str]):
+    """Creates a Word document with formatted resume text, applying markdown syntax, and adding a header at the top of the first page only."""
     doc = Document()
     section = doc.sections[0]
     section.top_margin = Inches(0.5)
     section.bottom_margin = Inches(0.5)
     section.left_margin = Inches(0.75)
     section.right_margin = Inches(0.75)
-    
+
     style = doc.styles['Normal']
     style.font.name = 'Arial'
     style.font.size = Pt(11)
-    
-    # Add proper header
-    header = section.header
-    header_paragraph = header.paragraphs[0] if header.paragraphs else header.add_paragraph()
+
+    header_paragraph = doc.add_paragraph()
     header_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-    
+
     name_run = header_paragraph.add_run(user_name + "\n")
     name_run.bold = True
     name_run.font.size = Pt(24)
-    
+
     contact_line = " | ".join(contact_info)
-    header_paragraph.add_run(contact_line + "\n")
-    
+    contact_run = header_paragraph.add_run(contact_line)
+    contact_run.font.size = Pt(11)
+
+    doc.add_paragraph()  # Add spacer
+
+    bullet_group = []
+    for paragraph in resume_text.split("\n"):
+        heading_match = re.match(r'^(#+)\s*(.*)', paragraph)
+        bullet_match = re.match(r'^[\*-]\s+(.*)', paragraph)
+
+        if heading_match:
+            # Process header text, stripping ** but keeping italics
+            heading_level = min(len(heading_match.group(1)), 3)  # Limit to Heading 1-3
+            clean_text = heading_match.group(2).replace("**", "")
+            p = doc.add_paragraph()
+            words = re.split(r'(\*\*.*?\*\*|\*.*?\*)', clean_text)
+            for word in words:
+                run = p.add_run(word.replace("**", "").replace("*", ""))
+                if word.startswith("***") and word.endswith("***"):
+                    run.bold = True
+                    run.italic = True
+                elif word.startswith("*") and word.endswith("*"):
+                    run.italic = True
+            p.style = f'Heading {heading_level}'
+            p.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+
+        elif bullet_match:
+            bullet_group.append(bullet_match.group(1))
+
+        else:
+            if bullet_group:
+                for bullet in bullet_group:
+                    p = doc.add_paragraph(bullet, style='List Bullet')
+                    p.paragraph_format.space_before = Pt(0)
+                    p.paragraph_format.space_after = Pt(0)
+                    p.paragraph_format.line_spacing = 1
+                bullet_group = []
+
+            p = doc.add_paragraph()
+            words = re.split(r'(\*\*.*?\*\*|\*.*?\*)', paragraph)
+            for word in words:
+                run = p.add_run(word.replace("**", "").replace("*", ""))
+                if word.startswith("***") and word.endswith("***"):
+                    run.bold = True
+                    run.italic = True
+                elif word.startswith("**") and word.endswith("**"):
+                    run.bold = True
+                elif word.startswith("*") and word.endswith("*"):
+                    run.italic = True
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after = Pt(0)
+            p.paragraph_format.line_spacing = 1
+
+    # Handle any remaining bullets at the end
+    if bullet_group:
+        for bullet in bullet_group:
+            p = doc.add_paragraph(bullet, style='List Bullet')
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after = Pt(0)
+            p.paragraph_format.line_spacing = 1
+
     temp_path = tempfile.NamedTemporaryFile(delete=False, suffix=".docx").name
     doc.save(temp_path)
     return temp_path
 
 
-def show_resume_reactor():
-    st.title("🚀 ResumeReactor: Power Up Your Federal Resume")
-    st.markdown(
-        """
-        Welcome to **ResumeReactor**, the tool that refines your federal resume to match job descriptions with precision.
-        Simply upload your resume, paste a job description, and let AI generate a **polished, ATS-friendly** resume.
-        """
-    )
+# Set up Streamlit page configuration
+st.set_page_config(page_title="Resume Reactor - Resume Builder", page_icon="📄", layout="wide")
 
+Navbar()
+
+HORIZONTAL_BLUE = "assets/images/RR_Logo.svg"
+HORIZONTAL_WHITE = "assets/images/RR_Logo_dm.svg"
+
+st.logo(HORIZONTAL_BLUE, icon_image=HORIZONTAL_WHITE)
+
+
+st.title("🚀 ResumeReactor: Power Up Your Federal Resume")
+st.markdown(
+    """
+    Welcome to **ResumeReactor**, the tool that refines your federal resume to match job descriptions with precision.
+    Simply upload your resume, paste a job description, and let AI generate a **polished, ATS-friendly** resume.
+    """
+)
+with st.container(border=True):
     # API Key Input
-    openai_api_key: str = st.text_input("Enter your OpenAI API Key:", type="password")
+    openai_api_key: str = st.text_input("Enter your OpenAI API Key:*", type="password")
 
     # User Information Inputs
-    user_name: str = st.text_input("Enter Your Full Name:")
-    email: str = st.text_input("Enter Your Email:")
+    user_name: str = st.text_input("Enter Your Full Name:*")
+    email: str = st.text_input("Enter Your Email:*")
     phone: str = st.text_input("Enter Your Phone Number:")
     linkedin: str = st.text_input("Enter Your LinkedIn Profile:")
     github: str = st.text_input("Enter Your GitHub Profile:")
@@ -140,33 +198,73 @@ def show_resume_reactor():
     industry_key_word: str = st.text_input("Specify the industry of the job posting (e.g., IT, Finance, Healthcare, etc.)")
     job_description: str = st.text_area("📝 Paste the job description here:")
 
-    # Persistent resume preview state
-    if "generated_resume" not in st.session_state:
-        st.session_state.generated_resume = ""
+# Persistent resume preview state
+if "generated_resume" not in st.session_state:
+    st.session_state.generated_resume = ""
 
-    # Resume Generation Button
-    if st.button("Generate Resume"):
-        if not user_name or not contact_info:
-            st.error("Please fill in your full name and at least one contact detail.")
-        else:
-            if uploaded_file:
-                if uploaded_file.type == "text/plain":
-                    resume_content = uploaded_file.read().decode("utf-8")
-                elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-                    doc = Document(uploaded_file)
-                    resume_content = "\n".join([para.text for para in doc.paragraphs])
-                else:
-                    st.error("Unsupported file format. Please upload TXT or DOCX.")
-                    resume_content = ""
-                
-                if job_description and resume_content:
-                    st.session_state.generated_resume = generate_resume(job_description, resume_content, industry_key_word, openai_api_key)
+# Resume Generation Button
+if st.button("Generate Resume"):
+    if not user_name or not contact_info:
+        st.error("Please fill in your full name and at least one contact detail.")
+    else:
+        if uploaded_file:
+            if uploaded_file.type == "text/plain":
+                resume_content = uploaded_file.read().decode("utf-8")
+            elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                doc = Document(uploaded_file)
+                resume_content = "\n".join([para.text for para in doc.paragraphs])
+            else:
+                st.error("Unsupported file format. Please upload TXT or DOCX.")
+                resume_content = ""
+            
+            if job_description and resume_content:
+                # st.session_state.generated_resume = generate_resume(job_description, resume_content, industry_key_word, openai_api_key)
+                with st.spinner("Generating your resume. Please wait..."):
+                    st.session_state.generated_resume = generate_resume(
+                        job_description, resume_content, industry_key_word, openai_api_key
+                    )
 
-    # Display the resume preview persistently
-    if st.session_state.generated_resume:
-        st.subheader("🚀 AI-Powered Resume Output")
-        st.markdown(st.session_state.generated_resume)
-        
-        file_path = create_word_doc(st.session_state.generated_resume, user_name, contact_info)
-        with open(file_path, "rb") as file:
-            st.download_button("💾 Download Word Document", data=file, file_name="formatted_resume.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+                # with st.expander("🚀 Resume Preview & Download"):
+                #     st.markdown(st.session_state.generated_resume)
+                    
+                #     file_path = create_word_doc(st.session_state.generated_resume, user_name, contact_info)
+                #     with open(file_path, "rb") as file:
+                #         st.download_button("💾 Download Word Document", data=file, file_name="formatted_resume.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+
+            # if job_description and resume_content:
+            #     st.session_state.generated_resume = generate_resume(job_description, resume_content, industry_key_word, openai_api_key)
+
+# Display the resume preview persistently
+if st.session_state.generated_resume:
+    st.subheader("🚀 AI-Powered Resume Output")
+    # st.markdown(st.session_state.generated_resume)
+    with st.container(height=600, border=True, key="doc-preview"):
+        # Inject CSS once
+        st.markdown(
+            """
+            <style>
+            .st-key-doc-preview {
+                background-color: white;
+                color: black;
+                padding: 2rem;
+                border: 1px solid #ccc;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                white-space: pre-wrap;
+                max-width: 800px;
+                margin: 0 auto;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+
+        # Apply the styling to the resume content
+        st.markdown(st.session_state.generated_resume,
+                    unsafe_allow_html=True
+                    )
+    
+    file_path = create_word_doc(st.session_state.generated_resume, user_name, contact_info)
+    with open(file_path, "rb") as file:
+        st.download_button("💾 Download Word Document", data=file, file_name="formatted_resume.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
