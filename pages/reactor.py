@@ -159,7 +159,7 @@ def create_word_doc(resume_text: str, user_name: str, contact_info: List[str]):
 
 
 # Set up Streamlit page configuration
-st.set_page_config(page_title="Resume Reactor - Resume Builder", page_icon="📄", layout="wide")
+st.set_page_config(page_title="Resume Reactor - Tailor Resume", page_icon="📄", layout="wide")
 
 Navbar()
 

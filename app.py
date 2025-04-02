@@ -2,7 +2,7 @@ import os
 import streamlit as st
 from modules.nav import Navbar
 
-st.set_page_config(page_title="Resmue-Reactor: Home",
+st.set_page_config(page_title="Resmue-Reactor - Home",
                    page_icon="📈",
                    layout="wide",
                    )
