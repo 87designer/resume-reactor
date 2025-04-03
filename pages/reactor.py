@@ -159,14 +159,22 @@ def create_word_doc(resume_text: str, user_name: str, contact_info: List[str]):
 
 
 # Set up Streamlit page configuration
-st.set_page_config(page_title="Resume Reactor - Tailor Resume", page_icon="📄", layout="wide")
+st.set_page_config(page_title="Resume Reactor - Tailor Resume", page_icon="🪡", layout="wide")
+
+st.markdown("""
+    <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+    </style>
+""", unsafe_allow_html=True)
 
 Navbar()
 
 HORIZONTAL_BLUE = "assets/images/RR_Logo.svg"
 HORIZONTAL_WHITE = "assets/images/RR_Logo_dm.svg"
 
-st.logo(HORIZONTAL_BLUE, icon_image=HORIZONTAL_WHITE)
+st.logo(HORIZONTAL_WHITE, icon_image=HORIZONTAL_WHITE)
 
 
 st.title("🚀 ResumeReactor: Power Up Your Federal Resume")
@@ -181,8 +189,8 @@ with st.container(border=True):
     openai_api_key: str = st.text_input("Enter your OpenAI API Key:*", type="password")
 
     # User Information Inputs
-    user_name: str = st.text_input("Enter Your Full Name:*")
-    email: str = st.text_input("Enter Your Email:*")
+    user_name: str = st.text_input("Enter Your Full Name:")
+    email: str = st.text_input("Enter Your Email:")
     phone: str = st.text_input("Enter Your Phone Number:")
     linkedin: str = st.text_input("Enter Your LinkedIn Profile:")
     github: str = st.text_input("Enter Your GitHub Profile:")

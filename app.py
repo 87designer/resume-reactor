@@ -3,16 +3,24 @@ import streamlit as st
 from modules.nav import Navbar
 
 st.set_page_config(page_title="Resmue-Reactor - Home",
-                   page_icon="📈",
+                   page_icon="🚀",
                    layout="wide",
                    )
+
+st.markdown("""
+    <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+    </style>
+""", unsafe_allow_html=True)
 
 Navbar()
 
 HORIZONTAL_BLUE = "assets/images/RR_Logo.svg"
 HORIZONTAL_WHITE = "assets/images/RR_Logo_dm.svg"
 
-st.logo(HORIZONTAL_BLUE, icon_image=HORIZONTAL_WHITE)
+st.logo(HORIZONTAL_WHITE, icon_image=HORIZONTAL_WHITE)
 
 
 
