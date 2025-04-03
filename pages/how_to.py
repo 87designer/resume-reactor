@@ -60,16 +60,16 @@ with st.container(border=True):
 
     🔒 Keep your API key private – do not share it.
 
-    ### 💵 Step 3: Add $1–$5 to Your Account
+    ### 💵 Step 3: Add \$1–\$5 to Your Account
 
-    OpenAI charges just a **few cents per resume**, so $1–$5 goes a long way.
+    OpenAI charges just a **few cents per resume**, so \$1–\$5 goes a long way.
 
     1.	Go to: https://platform.openai.com/account/billing/overview
     2.	Click **“Set up paid account”** or **“Add payment method”**
     3.	Add your credit card (OpenAI uses Stripe – it’s secure and widely trusted)
     4.	After payment method is added, click **“Usage Limits”**
 
-    You can enter a **spending limit**, like $5, to stay in control
+    You can enter a **spending limit**, like \$5, to stay in control
 
     ### 🚀 Step 4: Paste Your API Key into ResumeReactor
 
